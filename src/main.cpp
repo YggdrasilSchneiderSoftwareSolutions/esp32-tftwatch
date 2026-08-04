@@ -7,6 +7,9 @@
 #include <SPI.h>
 #include "secrets.h"
 
+// Auskommentieren, wenn keine Debug-Ausgaben stattfinden sollen (Produktion)
+#define DEBUG
+
 // WIFI Einstellungen
 const char* ssid = WIFI_SSID;
 const char* password = WIFI_PASSWORD;
@@ -18,7 +21,7 @@ const char* timezone = "CET-1CEST,M3.5.0/02,M10.5.0/03";
 // dazwischen läuft die Uhrzeit über die Chipt-Zeitbasis weiter, kein Netzwerkzugriff nötig
 constexpr uint32_t NTP_SYNC_INTERVAL_HOURS = 6 * 60UL * 60UL * 1000UL; // 6 Stunden in ms
 
-constexpr uint32_t UPDATE_INTERVAL_MS = 1000; // Update-Intervall für die Anzeige (1 Sekunde)
+uint32_t UPDATE_INTERVAL_MS = 1000; // Update-Intervall für die Anzeige (1 Sekunde)
 uint32_t lastUpdateTime = 0; // Zeitstempel der letzten Anzeigeaktualisierung
 
 // Deutsche Texte für die Anzeige
@@ -47,7 +50,7 @@ const String de_months[] = {
 };
  
 // Display
-// Use dedicated hardware SPI pins
+// Dedizierte SPI pins nutzen
 Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RST);
  
 // ---- Cyberpunk HUD palette ----
@@ -210,16 +213,16 @@ void drawFrame() {
 void setup() {
   Serial.begin(115200);
  
-  // turn on backlite
+  // Hintergrundbeleuchtung einschalten
   pinMode(TFT_BACKLITE, OUTPUT);
   digitalWrite(TFT_BACKLITE, HIGH);
  
-  // turn on the TFT / I2C power supply
+  // TFT / I2C power supply einschalten
   pinMode(TFT_I2C_POWER, OUTPUT);
   digitalWrite(TFT_I2C_POWER, HIGH);
   delay(10);
  
-  // initialize TFT
+  // Display initialisieren
   tft.init(135, 240); // Init ST7789 240x135
   tft.setRotation(3);
  
@@ -233,7 +236,7 @@ void setup() {
   tft.setTextWrap(false);
   drawFrame();
  
-  Serial.println(F("Initialized"));
+  Serial.println(F("Display initialisiert, verbinde mit WLAN..."));
  
   // WLAN verbinden
   WiFi.begin(ssid, password);
@@ -241,6 +244,7 @@ void setup() {
     delay(500);
     Serial.print(".");
   }
+  Serial.println(F("\nWLAN verbunden!"));
  
   // Sync-Intervall setzen
   sntp_set_sync_interval(NTP_SYNC_INTERVAL_HOURS);
@@ -258,12 +262,37 @@ void loop() {
       // Wochentag und Monat übersetzen
       String weekday = de_weekdays[timeinfo.tm_wday];
       String month = de_months[timeinfo.tm_mon];
+      #ifdef DEBUG
       Serial.println(&timeinfo, "%A, %d %B %Y %H:%M:%S");
+      #endif
     
       drawTime(timeinfo);
+
+      // Standardfont Uhrzeit gross in Cyan, Trenner in Magenta
+      /*
+      const int16_t CLOCK_Y = 32;
+      const int16_t CLOCK_CLR_X = 44, CLOCK_CLR_Y = 32, CLOCK_CLR_W = 152, CLOCK_CLR_H = 26;
+      uint16_t COL_CLOCK     = tft.color565(0, 255, 255);
+      uint16_t COL_CLOCK_SEP = tft.color565(255, 0, 200);
+      char hh[3], mm[3], ss[3];
+      sprintf(hh, "%02d", timeinfo.tm_hour);
+      sprintf(mm, "%02d", timeinfo.tm_min);
+      sprintf(ss, "%02d", timeinfo.tm_sec);
+      tft.fillRect(CLOCK_CLR_X, CLOCK_CLR_Y, CLOCK_CLR_W, CLOCK_CLR_H, COL_BG);
+      tft.setTextWrap(false);
+      tft.setTextSize(4);
+      tft.setCursor(CLOCK_CLR_X, CLOCK_Y);
+      tft.setTextColor(COL_CLOCK, COL_BG);     tft.print(hh);
+      tft.setTextColor(COL_CLOCK_SEP, COL_BG); tft.print(":");
+      tft.setTextColor(COL_CLOCK, COL_BG);     tft.print(mm);
+      tft.setTextColor(COL_CLOCK_SEP, COL_BG); tft.print(":");
+      tft.setTextColor(COL_CLOCK, COL_BG);     tft.print(ss);
+      */
+
       drawDate(weekday, month, timeinfo);
       drawSyncPulse(timeinfo.tm_sec % 2 == 0);
     } else {
+      drawSyncPulse(false);
       Serial.println(F("Warte auf Zeitsynchronisation..."));
     }
   }
