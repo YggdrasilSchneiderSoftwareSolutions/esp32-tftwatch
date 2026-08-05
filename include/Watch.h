@@ -72,6 +72,13 @@ class Watch {
     private:
         const uint32_t UPDATE_INTERVAL_MS = 1000; // Update-Intervall für die Anzeige (1 Sekunde)
         uint32_t lastUpdateTime = 0; // Zeitstempel der letzten Anzeigeaktualisierung
+
+        // Draws a filled rect with a 1px dim halo behind it, to fake a neon glow on the TFT.
+        void glowRect(int x, int y, int w, int h, uint16_t bright, uint16_t dim);
+        void drawDigit(int x, int y, int digit, uint16_t bright, uint16_t dim);
+        void drawColon(int x, bool visible);
+        void drawTime(const struct tm& timeinfo);
+        void drawDate(const String& weekday, const String& month, const struct tm& timeinfo);
     
     protected:
         Adafruit_ST7789& tft;
@@ -81,12 +88,6 @@ class Watch {
         virtual ~Watch();
 
         void drawSyncPulse(bool pulseOn = false);
-        // Draws a filled rect with a 1px dim halo behind it, to fake a neon glow on the TFT.
-        void glowRect(int x, int y, int w, int h, uint16_t bright, uint16_t dim);
-        void drawDigit(int x, int y, int digit, uint16_t bright, uint16_t dim);
-        void drawColon(int x, bool visible);
-        void drawTime(const struct tm& timeinfo);
-        void drawDate(const String& weekday, const String& month, const struct tm& timeinfo);
         // Static HUD chrome that never changes: corner brackets, header/footer labels, divider lines.
         void drawFrame();
         /* virtual method to override */
