@@ -121,7 +121,6 @@ void Watch::drawFrame() {
     tft.fillRect(TIME_X, DIVIDER_Y1, TIME_ROW_WIDTH, 1, COL_CYAN_DIM);
     tft.fillRect(TIME_X, DIVIDER_Y2, TIME_ROW_WIDTH, 1, COL_MAGENTA_DIM);
     
-    String footer = "// LOCALE: DE  TZ: CET-CEST //";
     int16_t x1, y1;
     uint16_t w, h;
     tft.getTextBounds(footer, 0, 0, &x1, &y1, &w, &h);
